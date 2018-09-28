@@ -1,0 +1,91 @@
+---
+title: "Lab4"
+author: "Roshni Sundaramurthy"
+date: "28 September 2018"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(ggplot2)
+library(dplyr)
+library(lattice)
+library(plotly)
+```
+
+## Assignment 2
+
+```{r echo=FALSE message=FALSE}
+df <- read.csv("adult.csv")
+colnames(df) <- c("age","workclass","fnlwgt","edu","edu_num","marital_status","occupation","relationship","race","sex","cap_gain","cap_loss","hours_per_week","native_country","income_level")
+#View(df)
+```
+
+### 1.1 Scatter plot
+```{r}
+plot1 <- ggplot(df, aes(hours_per_week,age,color=income_level))+labs(title="Scatter plot",x="Hours per week", y = "Age")+
+         geom_point()
+plot1
+```
+
+```{r}
+plot2<-ggplot(df, aes(x=hours_per_week,y=age,color=income_level))+geom_point()+labs(title="Trellis plot",x="Hours per week", y = "Age")+
+   facet_grid(income_level~.)
+plot2
+```
+
+### 1.2 Density plot
+
+```{r}
+#df1 <- df %>%
+#  select(age, income_level)
+#df1
+#df1 %>% group_by(income_level) %>%
+  
+  
+#  ggplot(x = df$age, y= df$income_level) +
+#  geom_density()
+  
+  
+
+   # group_by(income_level) %>%
+  #ggplot(x = df$age) +
+  #geom_density()
+```
+
+
+```{r}
+plot3 <- ggplot()+
+         geom_density(data=df, aes(x=age, group=income_level, fill=income_level))
+plot3
+```
+```{r}
+plot4<-ggplot(df, aes(x=age,group=income_level,fill=income_level))+geom_density()+labs(title="Trellis plot")+
+   facet_grid(marital_status~.)
+plot4
+```
+
+### 1.3 3D-scatter plot and 2D-density plot
+```{r 3D scatter plot}
+df1 <- filter(df, cap_loss!=0)
+p <- plot_ly(df1, x = ~edu_num, y = ~age, z = ~cap_loss) %>%
+  add_markers(colorscale = c('#BF382A', '#0C4B8E', '#1c1c1c'), showscale=TRUE) %>%
+  layout(scene = list(xaxis = list(title = 'Education-num'),
+                     yaxis = list(title = 'Age'),
+                     zaxis = list(title = 'Capital loss')))
+p
+```
+
+```{r 2D Density plot}
+df1 %>%
+  mutate(age1 = cut_number(age))
+  
+
+plot_ly(df1, x = ~edu_num, y = ~age, z = ~cap_loss) %>%
+  add_markers(colorscale = c('#BF382A', '#0C4B8E', '#1c1c1c'), showscale=TRUE) %>%
+  layout(scene = list(xaxis = list(title = 'Education-num'),
+                     yaxis = list(title = 'Age'),
+                     zaxis = list(title = 'Capital loss')))
+```
+
+
+

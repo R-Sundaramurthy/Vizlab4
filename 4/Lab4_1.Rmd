@@ -1,0 +1,46 @@
+---
+title: "Visualization Lab 3"
+author: "Roshni Sundaramurthy (rossu809) & Brian Masinde (brima748)"
+date: "26 September 2018"
+output:
+  html_document:
+    df_print: paged
+  html_notebook:
+    theme: journal
+  pdf_document: default
+fontsize: 11pt
+bibliography: references.bib
+---
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+# steps 4,5, 6 use euclidean distance
+library(plotly)
+```
+
+```{r data, echo = FALSE}
+prices_earnings <- read.delim("prices-and-earnings.txt")
+```
+
+```{r}
+# keep columns 1,2,5,6,7,9,10,16,17,18,19
+
+prices_earnings2 <- prices_earnings[, c(1,2,5,6,7,9,10,16,17,18,19)]
+
+rownames(prices_earnings2) <- prices_earnings2[[1]]
+```
+
+```{r}
+# question 2 scaling
+prices_earnings_sc <- scale(prices_earnings2[,-1])
+
+prices_earnings_sc <- as.data.frame(prices_earnings_sc)
+```
+
+```{r heatmap}
+prices_earnings_sc %>% 
+  plot_ly(x = ~colnames(prices_earnings_sc), y = rownames(prices_earnings_sc),
+    z = ~prices_earnings_sc, type = "heatmap", 
+    colors =colorRamp(c("yellow","red"))
+  )
+```
+

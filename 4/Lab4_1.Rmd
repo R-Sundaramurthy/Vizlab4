@@ -20,27 +20,57 @@ library(plotly)
 ```{r data, echo = FALSE}
 prices_earnings <- read.delim("prices-and-earnings.txt")
 ```
-
+### Question 1.
 ```{r}
 # keep columns 1,2,5,6,7,9,10,16,17,18,19
 
-prices_earnings2 <- prices_earnings[, c(1,2,5,6,7,9,10,16,17,18,19)]
+p_e <- prices_earnings[, c(1,2,5,6,7,9,10,16,17,18,19)]
 
-rownames(prices_earnings2) <- prices_earnings2[[1]]
+rownames(p_e) <- p_e[[1]]
+```
+
+```{r scale, echo = FALSE}
+# question 2 scaling
+p_e_sc <- scale(p_e[,-1])
+
+```
+
+### Question 2.
+Without doing any reordering We cannot identify any clusters or outliers.
+
+```{r heatmap}
+#p_e_sc %>% 
+  plot_ly(x =~colnames(p_e_sc), y =~rownames(p_e_sc),
+    z = ~p_e_sc, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
+
+### Question 3.
+
+```{r Question3_a}
+# seriation needs to permute rows and columns, thus distance by row and column
+p_e_rdist <- dist(p_e_sc, method = "euclidean")
+
+p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
+```
+
+
+
+```{r question3_b}
+# computing distance as one minus correlation
+
+p_e_cor <- 1 - cor(p_e_sc)
+
+# as distance
+p_e_cor_dist <- as.dist(p_e_cor)
 ```
 
 ```{r}
-# question 2 scaling
-prices_earnings_sc <- scale(prices_earnings2[,-1])
 
-prices_earnings_sc <- as.data.frame(prices_earnings_sc)
-```
-
-```{r heatmap}
-prices_earnings_sc %>% 
-  plot_ly(x = ~colnames(prices_earnings_sc), y = rownames(prices_earnings_sc),
-    z = ~prices_earnings_sc, type = "heatmap", 
-    colors =colorRamp(c("yellow","red"))
-  )
 ```
 

@@ -15,6 +15,7 @@ bibliography: references.bib
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 # steps 4,5, 6 use euclidean distance
 library(plotly)
+library(seriation)
 ```
 
 ```{r data, echo = FALSE}
@@ -52,13 +53,38 @@ Without doing any reordering We cannot identify any clusters or outliers.
 
 ### Question 3.
 
-```{r Question3_a}
+```{r question3_a_dist}
 # seriation needs to permute rows and columns, thus distance by row and column
 p_e_rdist <- dist(p_e_sc, method = "euclidean")
 
 p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
 ```
 
+```{r question3_a_ord}
+# make sure that results are reproducible
+set.seed(1011)
+# get orders of the row and col distances; Hamilton path length
+order1 <- get_order(seriate(p_e_rdist, method = "OLO"))
+
+order2 <-get_order(seriate(p_e_cdist, method = "OLO"))
+```
+
+```{r question3_a_reord}
+# reordering the columns 
+# rev gives a reversed version of object
+p_reord <- p_e_sc[rev(order1), order2]
+```
+
+```{r question3_a_heat}
+plot_ly(x =~colnames(p_reord), y =~rownames(p_reord),
+    z = ~p_reord, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
 
 
 ```{r question3_b}

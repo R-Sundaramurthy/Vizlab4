@@ -64,9 +64,9 @@ p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
 # make sure that results are reproducible
 set.seed(1011)
 # get orders of the row and col distances; Hamilton path length
-order1 <- get_order(seriate(p_e_rdist, method = "OLO"))
+order1 <- get_order(seriate(p_e_rdist, method = "HC"))
 
-order2 <-get_order(seriate(p_e_cdist, method = "OLO"))
+order2 <-get_order(seriate(p_e_cdist, method = "HC"))
 
 p_reord <- p_e_sc[rev(order1), order2]
 ```
@@ -76,7 +76,7 @@ plot_ly(x =~colnames(p_reord), y =~rownames(p_reord),
     z = ~p_reord, type = "heatmap", 
     colors = colorRamp(c("black","red"))
   ) %>%
-  layout(title =  "Heatmap of prices and earnings (Euclid dist)",
+  layout(title =  "Heatmap of prices and earnings (Euclid dist - HC)",
          xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
          yaxis = list(title = "Cities", zeroline = FALSE)
   )
@@ -96,9 +96,9 @@ p_e_cor1 <- as.dist((1 - cor(t(p_e_sc)))/2)
 set.seed(1212)
 
 # get orders for columns and rows
-ord1 <- get_order(seriate(p_e_cor, method = "OLO"))
+ord1 <- get_order(seriate(p_e_cor, method = "HC"))
 
-ord2 <- get_order(seriate(p_e_cor1, method = "OLO"))
+ord2 <- get_order(seriate(p_e_cor1, method = "HC"))
 
 # reorder
 p_reord2 <- p_e_sc[rev(ord2), ord1]
@@ -146,7 +146,7 @@ plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
 # function creterion to compare unordered distance and ordered
 # distance = p_e_rdist (row distance)
 # or = order
-or1 <- seriate(p_e_rdist, method = "OLO")
+or1 <- seriate(p_e_rdist, method = "HC")
 
 or2 <- seriate(p_e_rdist, method = "TSP")
 
@@ -163,3 +163,4 @@ result1
 result2
 ```
 
+HC solver has shorter path lenght compared to TSP solver

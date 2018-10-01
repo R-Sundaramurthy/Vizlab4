@@ -122,3 +122,44 @@ Based on the euclidean distance heat map, net wage tends to higher values from D
 
 
 ### Question 4.
+```{r question4_order}
+# use p_e_rdist and p_e_cdist (euclidean distance)
+ord_q4_1 <- get_order(seriate(p_e_rdist, method = "TSP"))
+
+order_q4_2 <-get_order(seriate(p_e_cdist, method = "TSP"))
+
+p_reord_q4 <- p_e_sc[rev(ord_q4_1), order_q4_2]
+```
+
+```{r question4_heat}
+plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
+    z = ~p_reord_q4, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings (Euclid dist- TSP)",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
+
+```{r question4_crit}
+# function creterion to compare unordered distance and ordered
+# distance = p_e_rdist (row distance)
+# or = order
+or1 <- seriate(p_e_rdist, method = "OLO")
+
+or2 <- seriate(p_e_rdist, method = "TSP")
+
+result1 <- rbind(unordered = criterion(p_e_rdist), ordered = criterion(p_e_rdist,or1 ))
+
+result2 <- rbind(unordered = criterion(p_e_rdist), ordered = criterion(p_e_rdist,or2 ))
+```
+
+```{r question4_crit1}
+result1
+```
+
+```{r question4_crit2}
+result2
+```
+

@@ -163,4 +163,4 @@ result1
 result2
 ```
 
-HC solver has shorter path lenght compared to TSP solver
+HC solver has shorter path lenght compared to TSP solve.

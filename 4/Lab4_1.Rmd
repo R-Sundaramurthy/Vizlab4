@@ -164,3 +164,59 @@ result2
 ```
 
 TSP solver has shorter path length compared to HC solver.
+
+### Question 5.
+
+```{r}
+# parallel coordinates plot from unsorted scaled data 
+
+p_e_sc2 <- as.data.frame(p_e_sc)
+
+p_e_sc2 <- round(p_e_sc2, 1)
+
+```
+
+
+```{r parcoord, fig.width= 9.5, fig.height=8}
+p_e_sc2 %>% plot_ly(type ="parcoords",
+  dimensions = list(
+    list(label = "Food.Costs...", values = ~Food.Costs...),
+    list(label = "iPhone.4S.hr.", values = ~iPhone.4S.hr.),
+    list(label = "Clothing.Index", values = ~Clothing.Index),
+    list(label = "Hours.Worked", values = ~Hours.Worked),
+    list(label = "Wage.Net", values = ~Wage.Net),
+    list(label = "Vacation.Days", values = ~Vacation.Days),
+    list(label = "Big.Mac.min.", values = ~Big.Mac.min.),
+    list(label = "Bread.kg.in.min.", values = ~Bread.kg.in.min.),
+    list(label = "Rice.kg.in.min.", values = ~Rice.kg.in.min.),
+    list(label = "Goods.and.Services...", values = ~Goods.and.Services...)
+  )
+)
+```
+
+
+```{r}
+# adding a factored column by iphone column which defines the clusters
+p_e_sc2$clust <-ifelse(p_e_sc2$iPhone.4S.hr. < -0.5, 0, 1)
+ 
+```
+
+```{r}
+p_e_sc2 %>% plot_ly(type ="parcoords",
+  line = list(color = ~clust, colorscale = list(c(0, "red"), c(1, "blue"))),
+  dimensions = list(
+    list(label = "Food.Costs...", values = ~Food.Costs...),
+    list(label = "iPhone.4S.hr.", values = ~iPhone.4S.hr.),
+    list(label = "Clothing.Index", values = ~Clothing.Index),
+    list(label = "Hours.Worked", values = ~Hours.Worked),
+    list(label = "Wage.Net", values = ~Wage.Net),
+    list(label = "Vacation.Days", values = ~Vacation.Days),
+    list(label = "Big.Mac.min.", values = ~Big.Mac.min.),
+    list(label = "Bread.kg.in.min.", values = ~Bread.kg.in.min.),
+    list(label = "Rice.kg.in.min.", values = ~Rice.kg.in.min.),
+    list(label = "Goods.and.Services...", values = ~Goods.and.Services...)
+  )
+)
+```
+
+We can identify two clusters defined by Wage net (blue) and iphone 4s (red). Wage net has values greater than 0 in the red cluster (defined by iphone 4) while iphone has values has values greater than -0.5 in the blue cluster.

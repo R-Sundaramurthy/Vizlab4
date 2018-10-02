@@ -62,11 +62,11 @@ p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
 
 ```{r question3_a_order}
 # make sure that results are reproducible
-set.seed(1011)
+#set.seed(1011)
 # get orders of the row and col distances; Hamilton path length
-order1 <- get_order(seriate(p_e_rdist, method = "HC"))
+order1 <- get_order(seriate(p_e_rdist, method = "OLO"))
 
-order2 <-get_order(seriate(p_e_cdist, method = "HC"))
+order2 <-get_order(seriate(p_e_cdist, method = "OLO"))
 
 p_reord <- p_e_sc[rev(order1), order2]
 ```
@@ -93,12 +93,12 @@ p_e_cor1 <- as.dist((1 - cor(t(p_e_sc)))/2)
 
 ```{r question3_b_order}
 # set seed to ensure results are reproducible
-set.seed(1212)
+#set.seed(1212)
 
 # get orders for columns and rows
-ord1 <- get_order(seriate(p_e_cor, method = "HC"))
+ord1 <- get_order(seriate(p_e_cor, method = "OLO"))
 
-ord2 <- get_order(seriate(p_e_cor1, method = "HC"))
+ord2 <- get_order(seriate(p_e_cor1, method = "OLO"))
 
 # reorder
 p_reord2 <- p_e_sc[rev(ord2), ord1]
@@ -146,7 +146,7 @@ plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
 # function creterion to compare unordered distance and ordered
 # distance = p_e_rdist (row distance)
 # or = order
-or1 <- seriate(p_e_rdist, method = "HC")
+or1 <- seriate(p_e_rdist, method = "OLO")
 
 or2 <- seriate(p_e_rdist, method = "TSP")
 
@@ -163,4 +163,4 @@ result1
 result2
 ```
 
-HC solver has shorter path lenght compared to TSP solve.
+TSP solver has shorter path length compared to HC solver.

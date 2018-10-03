@@ -60,6 +60,8 @@ p_e_rdist <- dist(p_e_sc, method = "euclidean")
 p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
 ```
 
+We used method "OLO" as the Hierarchical Clustering algorithm instead of "HC" method, because according to the documentation in seriation package and @[hahsler] the former does not optimize the Hamiltonian Path Length.
+
 ```{r question3_a_order}
 # make sure that results are reproducible
 #set.seed(1011)
@@ -141,6 +143,8 @@ plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
          yaxis = list(title = "Cities", zeroline = FALSE)
   )
 ```
+
+From visual comparison of the heatmap produced by HC solver and TSP, we prefer the latter because there appears to be a separation along the anti diagonal such that cities that have similary high prices are placed along this diagonal. In the heatmap by the TSP solver this distinctionn is not quite clear.
 
 ```{r question4_crit}
 # function creterion to compare unordered distance and ordered

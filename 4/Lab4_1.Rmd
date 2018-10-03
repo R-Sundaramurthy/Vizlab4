@@ -160,14 +160,16 @@ result2 <- rbind(unordered = criterion(p_e_rdist), ordered = criterion(p_e_rdist
 ```
 
 ```{r question4_crit1}
+# criterion on HC solver and unordered
 result1
 ```
 
 ```{r question4_crit2}
+# criterion on TSP and unordered.
 result2
 ```
 
-TSP solver has shorter path length compared to HC solver.
+TSP solver has shorter path length (121.718) compared to HC solver (121.967) by a very small margin of .249. Thus it does a slighlty better job of optimizing the Hamiltonian Path Length. For measure of effectiveness (ME) the HC solver (ME = 652.44) has advantage over the TSP (ME = 651.598). A higher ME implies a better arrangement of the dissimilarity matrix. For gradient measures since objective is to increase the distance from main diagonal, we infer that HC (65528) does a better job of achieving this compared to TSP solver(41312).
 
 ### Question 5.
 
@@ -224,3 +226,5 @@ p_e_sc2 %>% plot_ly(type ="parcoords",
 ```
 
 We can identify two clusters defined by Wage net (blue) and iphone 4s (red). Wage net has values greater than 0 in the red cluster (defined by iphone 4) while iphone has values has values greater than -0.5 in the blue cluster.
+
+

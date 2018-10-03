@@ -16,6 +16,9 @@ bibliography: references.bib
 # steps 4,5, 6 use euclidean distance
 library(plotly)
 library(seriation)
+library(scales)
+library(dplyr)
+library(tidyr)
 ```
 
 ```{r data, echo = FALSE}
@@ -64,7 +67,7 @@ We used method "OLO" as the Hierarchical Clustering algorithm instead of "HC" me
 
 ```{r question3_a_order}
 # make sure that results are reproducible
-#set.seed(1011)
+set.seed(1011)
 # get orders of the row and col distances; Hamilton path length
 order1 <- get_order(seriate(p_e_rdist, method = "OLO"))
 
@@ -95,7 +98,7 @@ p_e_cor1 <- as.dist((1 - cor(t(p_e_sc)))/2)
 
 ```{r question3_b_order}
 # set seed to ensure results are reproducible
-#set.seed(1212)
+set.seed(1212)
 
 # get orders for columns and rows
 ord1 <- get_order(seriate(p_e_cor, method = "OLO"))
@@ -126,8 +129,12 @@ Based on the euclidean distance heat map, net wage tends to higher values from D
 ### Question 4.
 ```{r question4_order}
 # use p_e_rdist and p_e_cdist (euclidean distance)
+# set seed
+set.seed(11)
+
 ord_q4_1 <- get_order(seriate(p_e_rdist, method = "TSP"))
 
+set.seed(111)
 order_q4_2 <-get_order(seriate(p_e_cdist, method = "TSP"))
 
 p_reord_q4 <- p_e_sc[rev(ord_q4_1), order_q4_2]
@@ -150,7 +157,13 @@ From visual comparison of the heatmap produced by HC solver and TSP, we prefer t
 # function creterion to compare unordered distance and ordered
 # distance = p_e_rdist (row distance)
 # or = order
+
+# set seed 
+set.seed(222)
+
 or1 <- seriate(p_e_rdist, method = "OLO")
+
+set.seed(333)
 
 or2 <- seriate(p_e_rdist, method = "TSP")
 
@@ -225,6 +238,28 @@ p_e_sc2 %>% plot_ly(type ="parcoords",
 )
 ```
 
-We can identify two clusters defined by Wage net (blue) and iphone 4s (red). Wage net has values greater than 0 in the red cluster (defined by iphone 4) while iphone has values has values greater than -0.5 in the blue cluster.
+We can identify two clusters defined by Wage net (blue) and iphone 4s (red). Wage net has values greater than 0 in the red cluster (defined by iphone 4) while iphone has values has values greater than -0.5 in the blue cluster. These clusters are difficult to interpret. The most prominent outlier in the blue cluster is the price of Rice per kg, The lines at this variable are furthest apart . It does not seem to fit into any of the two clusters.
+
+```{r Question 6}
+# get the rownames to a column
+p_ord_HC <- as.data.frame(p_reord)
+p_ord_HC$name <- rownames(p_ord_HC)
+```
+
+```{r}
+# colapse the p_ord_HC to long format
+p_ord_HC %>%
+  tidyr::gather(variable, value, -name, factor_key = T) %>%
+  arrange(name) %>%
+  ggplot(aes(x=variable, y=value, group=name)) + 
+  geom_polygon(fill="#F81894") + 
+  coord_polar() + theme_classic() + 
+  facet_wrap(~ name) #+ 
+  #theme(axis.text.x = element_text(size = 5))
+```
+
+Cairo and Delhi are outliers with respect to the price of bread per kg. Prague, Johanessburg and Panama form a cluster the prices are comparatively small and similar across the products.. The most distinct outlier would be Caracas. The prices aååear higher due to the size of the radar chart.
 
 
+### Question 7.
+Among Heatmaps, paralled coordinates and radar charts, heatmaps are relatively easier to interprate in terms of time and accuracy. Radar cahrts are hard to interprate when the number of variables to compare a re high. Parallel coordiantes are generally messy to work with.

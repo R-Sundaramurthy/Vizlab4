@@ -18,6 +18,8 @@ library(seriation)
 library(dplyr)
 library(lattice)
 library(plotly)
+library(scales)
+library(tidyr)
 ```
 
 ## Assignment 1
@@ -28,31 +30,32 @@ prices_earnings <- read.delim("prices-and-earnings.txt")
 
 ### 1.1
 
-```{r}
+```{r subset}
 # keep columns 1,2,5,6,7,9,10,16,17,18,19
 
 p_e <- prices_earnings[, c(1,2,5,6,7,9,10,16,17,18,19)]
 
+# set column 1 to row names.
 rownames(p_e) <- p_e[[1]]
 ```
 
 
-```{r}
-# question 2 scaling
+```{r scaling, echo = FALSE}
+# Preliminary scaling step to question 
 p_e_sc <- scale(p_e[,-1])
 
 ```
 
 ### 1.2
 
-Without doing any reordering We cannot identify any clusters or outliers.
-```{r}
-p_e_sc %>% 
+Without doing any reordering We cannot identify any clusters or outliers. The heatmap looks randomized.
+```{r heat}
+#p_e_sc %>% it was not possible to pipe the data since it is a matrix
   plot_ly(x =~colnames(p_e_sc), y =~rownames(p_e_sc),
     z = ~p_e_sc, type = "heatmap", 
     colors = colorRamp(c("black","red"))
   ) %>%
-  layout(title =  "Heatmap of prices and earnings",
+  layout(title =  "Heatmap of prices and earnings (Without ordering)",
          xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
          yaxis = list(title = "Cities", zeroline = FALSE)
   )
@@ -60,25 +63,35 @@ p_e_sc %>%
 
 ### 1.3
 
-The ordering by euclidean distance produces a heat map that is easier to analyze. At first glance we can perceive four general regions of two groups. The first group heat map color tends towards a brighter shade of red while the second group tend towards a darker shade of red/black. Although these groups can be seen in the correlation distance heat map, it is not as clear as the first.
+The ordering by euclidean distance produces a heat map that is easier to analyze. At first glance we can perceive four general regions of two groups. The first group heat map color tends towards higher price values (a brighter shade of red) while the second group tend towards lower price values (a darker shade of red/black). Although these groups can be seen in the correlation distance heat map, it is not as clear as the one produced by euclidean distance.
 
-Based on the euclidean distance heat map, net wage tends to higher values from Dubai while the number of hours worked decrease. This is the opposite to cities like Delhi,Bankok and Seoul. Interestingly food costs are generally low in the cities with highee working hours. Caracas is an outlier because food costs are high while net wage and the number of hours worked remains low.
+Based on the euclidean distance heat map, net wage tends to higher values from Dubai up towards Tokyo while the number of hours worked decrease. This is the opposite of cities like Delhi,Bankok and Seoul. Interestingly food costs are generally low in the cities with higher working hours. Caracas is an outlier because food costs are high while net wage and the number of hours worked remains low.
 
-```{r}
+We used method "OLO" as the Hierarchical Clustering algorithm instead of "HC" method, because according to the documentation in seriation package and @[hahsler] the former does not optimize the Hamiltonian Path Length.
+
+```{r euclidHC, echo = TRUE}
 # seriation needs to permute rows and columns, thus distance by row and column
 p_e_rdist <- dist(p_e_sc, method = "euclidean")
 
+# by column
 p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
 
 # make sure that results are reproducible
 set.seed(1011)
+
 # get orders of the row and col distances; Hamilton path length
-order1 <- get_order(seriate(p_e_rdist, method = "OLO"))
+ser_row_HC <- seriate(p_e_rdist, method = "OLO")
 
-order2 <-get_order(seriate(p_e_cdist, method = "OLO"))
+ser_col_HC <- seriate(p_e_cdist, method = "OLO")
 
+order1 <- get_order(ser_row_HC)
+
+order2 <-get_order(ser_col_HC )
+
+# reorder
 p_reord <- p_e_sc[rev(order1), order2]
 
+# plot
 plot_ly(x =~colnames(p_reord), y =~rownames(p_reord),
     z = ~p_reord, type = "heatmap", 
     colors = colorRamp(c("black","red"))
@@ -89,15 +102,15 @@ plot_ly(x =~colnames(p_reord), y =~rownames(p_reord),
   )
 ```
 
-```{r}
+```{r euclidCOR, echo = FALSE}
 # computing distance as one minus correlation
 
-p_e_cor <- as.dist((1 - cor(p_e_sc))/2)
+p_e_cor <- as.dist((1 - cor(p_e_sc)))
 
-p_e_cor1 <- as.dist((1 - cor(t(p_e_sc)))/2)
+p_e_cor1 <- as.dist((1 - cor(t(p_e_sc))))
 
 # set seed to ensure results are reproducible
-set.seed(1212)
+set.seed(10111)
 
 # get orders for columns and rows
 ord1 <- get_order(seriate(p_e_cor, method = "OLO"))
@@ -106,6 +119,8 @@ ord2 <- get_order(seriate(p_e_cor1, method = "OLO"))
 
 # reorder
 p_reord2 <- p_e_sc[rev(ord2), ord1]
+
+#plot
 plot_ly(x =~colnames(p_reord2), y =~rownames(p_reord2),
     z = ~p_reord2, type = "heatmap", 
     colors = colorRamp(c("black","red"))
@@ -118,13 +133,28 @@ plot_ly(x =~colnames(p_reord2), y =~rownames(p_reord2),
 
 ### 1.4
 
-```{r}
+From visual comparison of the heatmap produced by HC solver and TSP, we prefer the latter because there appears to be a separation along the anti diagonal such that cities that have similary high prices are placed along this diagonal. In the heatmap by the TSP solver this distinction is not quite clear.
+
+```{r heatTSP}
 # use p_e_rdist and p_e_cdist (euclidean distance)
-ord_q4_1 <- get_order(seriate(p_e_rdist, method = "TSP"))
+# set seed
+set.seed(11)
 
-order_q4_2 <-get_order(seriate(p_e_cdist, method = "TSP"))
+ser_row_TSP <- seriate(p_e_rdist, method = "TSP")
 
+set.seed(111)
+
+ser_col_TSP <- seriate(p_e_cdist, method = "TSP") 
+
+# orders
+ord_q4_1 <- get_order(ser_row_TSP)
+
+order_q4_2 <-get_order(ser_col_TSP)
+
+# reorder
 p_reord_q4 <- p_e_sc[rev(ord_q4_1), order_q4_2]
+
+# plot
 plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
     z = ~p_reord_q4, type = "heatmap", 
     colors = colorRamp(c("black","red"))
@@ -135,22 +165,18 @@ plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
   )
 ```
 
+TSP solver has shorter path length (119.09) compared to HC solver (121.967). Thus it does a better job of optimizing the Hamiltonian Path Length. For measure of effectiveness (ME) the TSP solver (ME = 653.2224) has advantage over the HC (ME = 652.4429). A higher ME implies a better arrangement of the dissimilarity matrix. For gradient measures, since objective is to increase the distance from main diagonal, we infer that HC (Gradient_raw = 65528) does a better job of achieving this compared to TSP solver(Gradient_raw = 39102).
 
-```{r}
+```{r criterion, echo = TRUE}
 # function creterion to compare unordered distance and ordered
 # distance = p_e_rdist (row distance)
-# or = order
-or1 <- seriate(p_e_rdist, method = "OLO")
+# use ser_row_HC because its a simulation, we need to compare the exact same results as used in heatmaps
+# use ser_row_TSP, same reason as above 
 
-or2 <- seriate(p_e_rdist, method = "TSP")
 
-result1 <- rbind(unordered = criterion(p_e_rdist), ordered = criterion(p_e_rdist,or1 ))
+result <- rbind(HC = criterion(p_e_rdist,ser_row_HC ), TSP  = criterion(p_e_rdist,or2))
 
-result2 <- rbind(unordered = criterion(p_e_rdist), ordered = criterion(p_e_rdist,or2 ))
-
-result1
-result2
-
+result
 ```
 
 

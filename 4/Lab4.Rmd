@@ -1,7 +1,7 @@
 ---
-title: "Visualization Lab 3"
+title: "Visualization Lab 4"
 author: "Roshni Sundaramurthy (rossu809) & Brian Masinde (brima748)"
-date: "30 September 2018"
+date: "04 October 2018"
 output:
   html_document:
     df_print: paged
@@ -15,6 +15,8 @@ bibliography: references.bib
 ```{r libraries, message=FALSE, warning=FALSE, echo=FALSE}
 library(ggplot2)
 library(seriation)
+library(scales)
+library(tidyr)
 library(dplyr)
 library(lattice)
 library(plotly)
@@ -42,14 +44,17 @@ rownames(p_e) <- p_e[[1]]
 
 ```{r scaling, echo = FALSE}
 # Preliminary scaling step to question 
+
+# question 2 scaling
 p_e_sc <- scale(p_e[,-1])
 
 ```
 
 ### 1.2
 
+
 Without doing any reordering We cannot identify any clusters or outliers. The heatmap looks randomized.
-```{r heat}
+```{r heatmap}
 #p_e_sc %>% it was not possible to pipe the data since it is a matrix
   plot_ly(x =~colnames(p_e_sc), y =~rownames(p_e_sc),
     z = ~p_e_sc, type = "heatmap", 
@@ -180,6 +185,121 @@ result
 ```
 
 
+### 1.5
+
+```{r datatransform, echo = FALSE}
+# parallel coordinates plot from unsorted scaled data 
+
+p_e_sc2 <- as.data.frame(p_e_sc)
+
+p_e_sc2 <- round(p_e_sc2, 1)
+
+```
+
+
+```{r parcoord}
+p_e_sc2 %>% plot_ly(type ="parcoords",
+  dimensions = list(
+    list(label = "Food.Costs...", values = ~Food.Costs...),
+    list(label = "iPhone.4S.hr.", values = ~iPhone.4S.hr.),
+    list(label = "Clothing.Index", values = ~Clothing.Index),
+    list(label = "Hours.Worked", values = ~Hours.Worked),
+    list(label = "Wage.Net", values = ~Wage.Net),
+    list(label = "Vacation.Days", values = ~Vacation.Days),
+    list(label = "Big.Mac.min.", values = ~Big.Mac.min.),
+    list(label = "Bread.kg.in.min.", values = ~Bread.kg.in.min.),
+    list(label = "Rice.kg.in.min.", values = ~Rice.kg.in.min.),
+    list(label = "Goods.and.Services...", values = ~Goods.and.Services...)
+  )
+)
+```
+
+
+```{r factorCol, echo = FALSE}
+# adding a factored column by iphone column which defines the clusters
+p_e_sc2$clust <-ifelse(p_e_sc2$iPhone.4S.hr. < -0.5, 0, 1)
+ 
+```
+
+```{r}
+p_e_sc2 %>% plot_ly(type ="parcoords",
+  line = list(color = ~clust, colorscale = list(c(0, "red"), c(1, "blue"))),
+  dimensions = list(
+    list(label = "Food.Costs...", values = ~Food.Costs...),
+    list(label = "iPhone.4S.hr.", values = ~iPhone.4S.hr.),
+    list(label = "Clothing.Index", values = ~Clothing.Index),
+    list(label = "Hours.Worked", values = ~Hours.Worked),
+    list(label = "Wage.Net", values = ~Wage.Net),
+    list(label = "Vacation.Days", values = ~Vacation.Days),
+    list(label = "Big.Mac.min.", values = ~Big.Mac.min.),
+    list(label = "Bread.kg.in.min.", values = ~Bread.kg.in.min.),
+    list(label = "Rice.kg.in.min.", values = ~Rice.kg.in.min.),
+    list(label = "Goods.and.Services...", values = ~Goods.and.Services...)
+  )
+)
+```
+
+We can identify two clusters defined by Wage net (blue) and iphone 4s (red). Wage net has values greater than 0 in the red cluster (defined by iphone 4) while iphone has values has values greater than -0.5 in the blue cluster. These clusters are difficult to interpret because there is no clear pattern of association between the variables. The most prominent outlier in the blue cluster is the price of Rice per kg, The lines at this variable are furthest apart . It does not seem to fit into any of the two clusters.
+
+### 1.6
+
+```{r wrangling, echo= FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# get the rownames to a column
+p_ord_HC <- as.data.frame(p_reord)
+
+# emply list to contain plots
+plots=list()
+
+nPlot= ncol(p_ord_HC)
+
+# put the row names to a column
+p_ord_HC %>%
+  add_rownames(var = "group") %>%
+  mutate_each(funs(rescale), -group) -> p_HC_radar
+
+for (i in 1:nPlot){
+  plots[[i]] <- htmltools::tags$div(
+    plot_ly(type = 'scatterpolar', 
+            r=as.numeric(p_HC_radar[i,-1]),
+            theta= colnames(p_HC_radar)[-1], 
+            fill="toself")%>%
+      layout(title=p_HC_radar$group[i]), style="width: 25%;")
+}
+
+h <-htmltools::tags$div(style = "display: flex; flex-wrap: wrap", plots)
+
+htmltools::browsable(h)
+```
+
+```{r radar}
+# Create an emply list
+plots <- list()
+
+# number of plots equal to number of columns
+nplot <- nrow(p_ord_HC)
+
+p_ord_HC %>%
+  mutate_each(funs(rescale), -name) -> p_ord_HC_r
+
+for (i in 1:nPlot){
+  plots[[i]] <- htmltools::tags$div(
+    plot_ly(type = 'scatterpolar', 
+            r=as.numeric(p_ord_HC_r[i,-1]),
+            theta= colnames(p_ord_HC_r)[-1], 
+            fill="toself")%>%
+      layout(title=p_ord_HC_r$name[i]), style="width: 25%;")
+}
+
+h <-htmltools::tags$div(style = "display: flex; flex-wrap: wrap", Ps)
+
+htmltools::browsable(h)
+```
+
+Cairo and Delhi are outliers with respect to the price of bread per kg. Prague, Johanessburg and Panama form a cluster the prices are comparatively small and similar across the products.. The most distinct outlier would be Caracas. The prices are higher due to the size of the radar plot.
+
+### 1.7
+
+Among Heatmaps, paralled coordinates and radar charts, heatmaps are relatively easier to interprate in terms of time and accuracy. Radar cahrts are hard to interprate when the number of variables to compare are high. We found parallel coordiantes to be generally messy to work with.
 
 ## Assignment 2
 
@@ -200,7 +320,7 @@ plot1 <- ggplot(df, aes(age,hours_per_week,color=income_level))+labs(title="Scat
 plot1
 
 plot2<-ggplot(df, aes(age,hours_per_week,color=income_level))+geom_point(size=1)+labs(title="Trellis plot",x="Age", y = "Hours per week")+
-   facet_grid(income_level~.)
+   facet_wrap(~income_level)
 plot2
 ```
 
@@ -210,11 +330,13 @@ The density curve is skewed to the right (right skewed distribution) for income 
 The trellis plot exhibits both income level for people with various marital status. The density curve for widower is normally distributed for both income levels. The people who were never married earnig <=50K lies within range of 17-40 age group.
 
 ```{r}
+
 plot3 <- ggplot(df, aes(x=age, group=income_level, fill=income_level))+
          geom_density(alpha=0.5) + labs(title="Density plot of age")
 plot3
 
-plot4<-ggplot(df, aes(x=age,group=income_level,fill=income_level))+geom_density(alpha=0.5)+labs(title="Trellis plot og age")+facet_grid(marital_status~.)
+
+plot4<-ggplot(df, aes(x=age,group=income_level,fill=income_level))+geom_density(alpha=0.5)+labs(title="Trellis plot of age")+facet_wrap(~marital_status)
 plot4
 ```
 
@@ -225,14 +347,15 @@ In 3D-scatter plot, the overlapping of data points around the same values makes 
 ```{r 3D scatter plot}
 df1 <- filter(df, cap_loss!=0)
 df1 %>% plot_ly(x = ~edu_num, y = ~age, z = ~cap_loss) %>%
-  add_markers(colorscale = c('#BF382A', '#0C4B8E', '#1c1c1c'), showscale=TRUE) %>%
-  layout(scene = list(xaxis = list(title = 'Education-num'),
+        add_markers() %>%
+        layout(scene = list(xaxis = list(title = 'Education-num'),
                      yaxis = list(title = 'Age'),
                      zaxis = list(title = 'Capital loss')))
+
 ```
 
 ```{r 2D Density plot}
-plot5 <- ggplot(df1, aes(x=edu_num,y=cap_loss))+stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE)+labs(title="2D raster type density plot")+theme(legend.position='none')+facet_grid(cut_number(df1$age,6)~.)
+plot5 <- ggplot(df1, aes(x=edu_num,y=cap_loss))+stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE)+labs(title="2D raster type density plot")+theme(legend.position='none')+facet_wrap(~cut_number(df1$age,6))
 plot5
 ```
 
@@ -248,24 +371,35 @@ plot6a
 
 
 ```{r (b) using shingles}
-new_age = equal.count(df1$age, number=4,overlap=.1)
-M <- matrix(unlist(levels(new_age)), ncol = 2, byrow = TRUE)
-M1 <- data.frame(Lower=M[,1],Upper=M[,2], Interval=factor(1:nrow(M)))
+Agerange<-lattice::equal.count(df$age, number=4, overlap=0.1) #overlap is 10% 
+
+L<-matrix(unlist(levels(Agerange)), ncol=2, byrow = T)
+L1<-data.frame(Lower=L[,1],Upper=L[,2], Interval=factor(1:nrow(L)))
+ggplot(L1)+geom_linerange(aes(ymin = Lower, ymax = Upper, x=Interval))
 
 index=c()
 Class=c()
-for(i in 1:nrow(M)){
-  Cl=paste("[", M1$Lower[i], ",", M1$Upper[i], "]", sep="")
-  ind=which(df$age>=M1$Lower[i] &df$age<=M1$Upper[i])
+for(i in 1:nrow(L)){
+  Cl=paste("[", L1$Lower[i], ",", L1$Upper[i], "]", sep="")
+  ind=which(df$age>=L1$Lower[i] &df$age<=L1$Upper[i])
   index=c(index,ind)
   Class=c(Class, rep(Cl, length(ind)))
 }
 
-df2<-df[index,]
-df2$Class<-as.factor(Class)
+df4<-df[index,]
+df4$Class<-as.factor(Class)
 
-plot6b <- ggplot(df2, aes(x=edu_num,y=cap_loss,color=cap_loss))+ geom_point()+labs(title="Trellis plot (Shingles)")
-  facet_grid(Class~.)
-  plot6b
+ggplot(df4, aes(x=edu_num,y=cap_loss, color=cap_loss))+ geom_point()+labs(title="Trellis plot with Shingles")+
+  facet_grid(Class~., labeller = "label_both")
+
   
 ```
+
+### Appendix
+
+```{r ref.label=knitr::all_labels(), echo = T, eval = F}
+
+```
+
+### References
+

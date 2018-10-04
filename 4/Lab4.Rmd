@@ -73,7 +73,7 @@ The ordering by euclidean distance produces a heat map that is easier to analyze
 
 Based on the euclidean distance heat map, net wage tends to higher values from Dubai up towards Tokyo while the number of hours worked decrease. This is the opposite of cities like Delhi,Bankok and Seoul. Interestingly food costs are generally low in the cities with higher working hours. Caracas is an outlier because food costs are high while net wage and the number of hours worked remains low.
 
-We used method "OLO" as the Hierarchical Clustering algorithm instead of "HC" method, because according to the documentation in seriation package and @[hahsler] the former does not optimize the Hamiltonian Path Length.
+We used method "OLO" as the Hierarchical Clustering algorithm instead of "HC" method, because according to the documentation in seriation package and [@hahsler] the former does not optimize the Hamiltonian Path Length.
 
 ```{r euclidHC, echo = TRUE}
 # seriation needs to permute rows and columns, thus distance by row and column

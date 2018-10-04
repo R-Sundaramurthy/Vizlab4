@@ -1,0 +1,394 @@
+---
+title: "Visualization Lab 4"
+author: "Roshni Sundaramurthy (rossu809) & Brian Masinde (brima748)"
+date: "04 October 2018"
+output:
+  html_document:
+    df_print: paged
+  html_notebook:
+    theme: journal
+  pdf_document: default
+fontsize: 11pt
+bibliography: references.bib
+---
+
+```{r libraries, message=FALSE, warning=FALSE, echo=FALSE}
+library(ggplot2)
+library(seriation)
+library(scales)
+library(tidyr)
+library(dplyr)
+library(lattice)
+library(plotly)
+library(scales)
+library(tidyr)
+library(gridExtra)
+```
+
+## Assignment 1
+
+```{r echo=FALSE}
+prices_earnings <- read.delim("prices-and-earnings.txt")
+```
+
+### 1.1
+
+```{r subset}
+# keep columns 1,2,5,6,7,9,10,16,17,18,19
+
+p_e <- prices_earnings[, c(1,2,5,6,7,9,10,16,17,18,19)]
+
+# set column 1 to row names.
+rownames(p_e) <- p_e[[1]]
+```
+
+
+```{r scaling, echo = FALSE}
+# Preliminary scaling step to question 
+
+# question 2 scaling
+p_e_sc <- scale(p_e[,-1])
+
+```
+
+### 1.2
+
+
+Without doing any reordering We cannot identify any clusters or outliers. The heat map looks randomized.
+```{r heatmap}
+#p_e_sc %>% it was not possible to pipe the data since it is a matrix
+  plot_ly(x =~colnames(p_e_sc), y =~rownames(p_e_sc),
+    z = ~p_e_sc, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings (Without ordering)",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
+
+### 1.3
+
+The ordering by euclidean distance produces a heat map that is easier to analyze. At first glance we can perceive four general regions of two groups. The first group heat map color tends towards higher price values (a brighter shade of red) while the second group tend towards lower price values (a darker shade of red/black). Although these groups can be seen in the correlation distance heat map, it is not as clear as the one produced by euclidean distance.
+
+Based on the euclidean distance heat map, net wage tends to higher values from Dubai up towards Tokyo while the number of hours worked decrease. This is the opposite of cities like Delhi,Bangkok and Seoul. Interestingly food costs are generally low in the cities with higher working hours. Caracas is an outlier because food costs are high while net wage and the number of hours worked remains low.
+
+We used method "OLO" as the Hierarchical Clustering algorithm instead of "HC" method, because according to the documentation in seriation package and [@hahsler] the former does not optimize the Hamiltonian Path Length.
+
+```{r euclidHC, echo = TRUE}
+# seriation needs to permute rows and columns, thus distance by row and column
+p_e_rdist <- dist(p_e_sc, method = "euclidean")
+
+# by column
+p_e_cdist <- dist(t(p_e_sc), method = "euclidean")
+
+# make sure that results are reproducible
+set.seed(1011)
+
+# get orders of the row and col distances; Hamilton path length
+ser_row_HC <- seriate(p_e_rdist, method = "OLO")
+
+ser_col_HC <- seriate(p_e_cdist, method = "OLO")
+
+order1 <- get_order(ser_row_HC)
+
+order2 <-get_order(ser_col_HC )
+
+# reorder
+p_reord <- p_e_sc[rev(order1), order2]
+
+# plot
+plot_ly(x =~colnames(p_reord), y =~rownames(p_reord),
+    z = ~p_reord, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings (Euclid dist)",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
+
+```{r euclidCOR, echo = FALSE}
+# computing distance as one minus correlation
+
+p_e_cor <- as.dist((1 - cor(p_e_sc)))
+
+p_e_cor1 <- as.dist((1 - cor(t(p_e_sc))))
+
+# set seed to ensure results are reproducible
+set.seed(10111)
+
+# get orders for columns and rows
+ord1 <- get_order(seriate(p_e_cor, method = "OLO"))
+
+ord2 <- get_order(seriate(p_e_cor1, method = "OLO"))
+
+# reorder
+p_reord2 <- p_e_sc[rev(ord2), ord1]
+
+#plot
+plot_ly(x =~colnames(p_reord2), y =~rownames(p_reord2),
+    z = ~p_reord2, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings (Cor dist)",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
+
+### 1.4
+
+From visual comparison of the heat map produced by HC solver and TSP, we prefer the latter because there appears to be a separation along the anti diagonal such that cities that have similarly high prices are placed along this diagonal. In the heat map by the TSP solver this distinction is not quite clear.
+
+```{r heatTSP}
+# use p_e_rdist and p_e_cdist (euclidean distance)
+# set seed
+set.seed(11)
+
+ser_row_TSP <- seriate(p_e_rdist, method = "TSP")
+
+set.seed(111)
+
+ser_col_TSP <- seriate(p_e_cdist, method = "TSP") 
+
+# orders
+ord_q4_1 <- get_order(ser_row_TSP)
+
+order_q4_2 <-get_order(ser_col_TSP)
+
+# reorder
+p_reord_q4 <- p_e_sc[rev(ord_q4_1), order_q4_2]
+
+# plot
+plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
+    z = ~p_reord_q4, type = "heatmap", 
+    colors = colorRamp(c("black","red"))
+  ) %>%
+  layout(title =  "Heatmap of prices and earnings (Euclid dist- TSP)",
+         xaxis = list(title = "Price-Earnings Indicators", zeroline = FALSE),
+         yaxis = list(title = "Cities", zeroline = FALSE)
+  )
+```
+
+TSP solver has shorter path length (120.9403) compared to HC solver (121.967). Thus it does a better job of optimizing the Hamiltonian Path Length. For measure of effectiveness (ME) the TSP solver (ME = 650.1384) is at a disadvantage compared to the HC (ME = 652.4429). A higher ME implies a better arrangement of the dissimilarity matrix. For gradient measures, since objective is to increase the distance from main diagonal, we infer that HC (Gradient_raw = 65528) does a better job of achieving this compared to TSP solver(Gradient_raw = 38166).
+
+```{r criterion, echo = TRUE}
+# function creterion to compare unordered distance and ordered
+# distance = p_e_rdist (row distance)
+# use ser_row_HC because its a simulation, we need to compare the exact same results as used in heatmaps
+# use ser_row_TSP, same reason as above 
+
+
+result <- rbind(HC = criterion(p_e_rdist,ser_row_HC ), TSP  = criterion(p_e_rdist,ser_row_TSP))
+
+result
+```
+
+
+### 1.5
+
+```{r datatransform, echo = FALSE}
+# parallel coordinates plot from unsorted scaled data 
+
+p_e_sc2 <- as.data.frame(p_e_sc)
+
+p_e_sc2 <- round(p_e_sc2, 1)
+
+```
+
+
+```{r parcoord}
+p_e_sc2 %>% plot_ly(type ="parcoords",
+  dimensions = list(
+    list(label = "Food.Costs...", values = ~Food.Costs...),
+    list(label = "iPhone.4S.hr.", values = ~iPhone.4S.hr.),
+    list(label = "Clothing.Index", values = ~Clothing.Index),
+    list(label = "Hours.Worked", values = ~Hours.Worked),
+    list(label = "Wage.Net", values = ~Wage.Net),
+    list(label = "Vacation.Days", values = ~Vacation.Days),
+    list(label = "Big.Mac.min.", values = ~Big.Mac.min.),
+    list(label = "Bread.kg.in.min.", values = ~Bread.kg.in.min.),
+    list(label = "Rice.kg.in.min.", values = ~Rice.kg.in.min.),
+    list(label = "Goods.and.Services...", values = ~Goods.and.Services...)
+  )
+)
+```
+
+
+```{r factorCol, echo = FALSE}
+# adding a factored column by iphone column which defines the clusters
+p_e_sc2$clust <-ifelse(p_e_sc2$iPhone.4S.hr. < -0.5, 0, 1)
+ 
+```
+
+```{r}
+p_e_sc2 %>% plot_ly(type ="parcoords",
+  line = list(color = ~clust, colorscale = list(c(0, "red"), c(1, "blue"))),
+  dimensions = list(
+    list(label = "Food.Costs...", values = ~Food.Costs...),
+    list(label = "iPhone.4S.hr.", values = ~iPhone.4S.hr.),
+    list(label = "Clothing.Index", values = ~Clothing.Index),
+    list(label = "Hours.Worked", values = ~Hours.Worked),
+    list(label = "Wage.Net", values = ~Wage.Net),
+    list(label = "Vacation.Days", values = ~Vacation.Days),
+    list(label = "Big.Mac.min.", values = ~Big.Mac.min.),
+    list(label = "Bread.kg.in.min.", values = ~Bread.kg.in.min.),
+    list(label = "Rice.kg.in.min.", values = ~Rice.kg.in.min.),
+    list(label = "Goods.and.Services...", values = ~Goods.and.Services...)
+  )
+)
+```
+
+We can identify two clusters defined by Wage net (blue) and iPhone 4s (red). Wage net has values greater than 0 in the red cluster (defined by iPhone 4) while iPhone has values has values greater than -0.5 in the blue cluster. These clusters are difficult to interpret because there is no clear pattern of association between the variables. The most prominent outlier in the blue cluster is the price of Rice per kg, The lines at this variable are furthest apart . It does not seem to fit into any of the two clusters.
+
+### 1.6
+
+```{r wrangling, echo= FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# get the rownames to a column
+p_ord_HC <- as.data.frame(p_reord)
+
+# emply list to contain plots
+plots=list()
+
+nPlot= nrow(p_ord_HC)
+
+# put the row names to a column
+p_ord_HC %>%
+  add_rownames(var = "group") %>%
+  mutate_each(funs(rescale), -group) -> p_HC_radar
+
+for (i in 1:nPlot){
+  plots[[i]] <- htmltools::tags$div(
+    plot_ly(type = 'scatterpolar', 
+            r=as.numeric(p_HC_radar[i,-1]),
+            theta= colnames(p_HC_radar)[-1], 
+            fill="toself")%>%
+      layout(title=p_HC_radar$group[i]), style="width: 25%;")
+}
+
+
+
+h <-htmltools::tags$div(style = "display: flex; flex-wrap: wrap", plots)
+
+htmltools::browsable(h)
+
+#grid.arrange(grobs = plots, ncol = 3)
+```
+
+Cairo is the most distinct outlier with respect to the price of bread per kg and net wage being very low while average number of work hours are very high. Prague, Johannesburg and Panama form a cluster the prices are comparatively small and similar across the products. Luxembourg, Oslo, Zurich, and Geneva form a cluster, they have similar indicators with vacation days proportional to net wage and high price of goods and services. Helsinki, Frankfurt, Vienna, Munich, Lyon, Paris and Copenhagen also form a cluster. Miami, Los Angeles, Chicago, Montreal and Toronto also form a cluster.   
+
+### 1.7
+
+Among Heat maps, parallel coordinates and radar charts, heat maps are relatively easier to interpret in terms of time and accuracy. Radar charts are hard to interpret when the number of variables to compare are high. We found parallel coordinates to be generally messy to work with.
+
+## Assignment 2
+
+```{r read data into R, echo=FALSE, message=FALSE}
+df <- read.csv("adult.csv")
+colnames(df) <- c("age","workclass","fnlwgt","edu","edu_num","marital_status","occupation","relationship","race","sex","cap_gain","cap_loss","hours_per_week","native_country","income_level")
+#View(df)
+```
+
+### 2.1 Scatter and Trellis plots
+
+The points in the scatter plot for both income levels are very close to each other and it is difficult to interpret the results for both <=50K and >50K income levels.
+The trellis plot shows both income levels in separate panels and so, it is quite easy to analyse the data. The people with age range of 0-25 who earns <=50K are working for long hours than people earning >50K.
+
+```{r Scatter and Trellis}
+plot1 <- ggplot(df, aes(age,hours_per_week,color=income_level))+labs(title="Scatter plot",x="Age", y = "Hours per week")+
+         geom_point(size=1)
+plot1
+
+plot2<-ggplot(df, aes(age,hours_per_week,color=income_level))+geom_point(size=1)+labs(title="Trellis plot",x="Age", y = "Hours per week")+
+   facet_wrap(~income_level)
+plot2
+```
+
+### 2.2 Density plot
+
+The density curve is skewed to the right (right skewed distribution) for income level <=50K and thus not normally distributed.The median income level for <=50K is less than the mean. Whereas the the density curve for income of >50K is bimodal.
+The trellis plot exhibits both income level for people with various marital status. The density curve for widower is normally distributed for both income levels. The people who were never married earning <=50K lies within range of 17-40 age group.
+
+```{r}
+
+plot3 <- ggplot(df, aes(x=age, group=income_level, fill=income_level))+
+         geom_density(alpha=0.5) + labs(title="Density plot of age")
+plot3
+
+
+plot4<-ggplot(df, aes(x=age,group=income_level,fill=income_level))+geom_density(alpha=0.5)+labs(title="Trellis plot of age")+facet_wrap(~marital_status)
+plot4
+```
+
+### 2.3 3D-scatter plot and 2D-density plot
+
+In 3D-scatter plot, the overlapping of data points around the same values makes it difficult to analyse the relationship between given three variables.
+
+```{r 3D scatter plot}
+df1 <- filter(df, cap_loss!=0)
+df1 %>% plot_ly(x = ~edu_num, y = ~age, z = ~cap_loss) %>%
+        add_markers() %>%
+        layout(scene = list(xaxis = list(title = 'Education-num'),
+                     yaxis = list(title = 'Age'),
+                     zaxis = list(title = 'Capital loss')))
+
+```
+
+
+In raster type 2D-density plot, there are 6 panels for each specific age group. Every panels of age group from [29,35] to [46,54] exhibits almost same outputs for capital loss ranging 1000-2000 except age group of [17,29] and [54,90]. There seems higher density in panel 1 with capital loss ranging from 1000-2000 and in panel 6, there is no such higher density so, it implies that people with age 54 to 90 has no such high capital loss when compared to other age groups.  
+
+```{r 2D Density plot}
+plot5 <- ggplot(df1, aes(x=edu_num,y=cap_loss))+
+         stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE)+
+         scale_fill_distiller(palette= "Spectral", direction=1) +scale_x_continuous(expand = c(0, 0)) +
+         scale_y_continuous(expand = c(0, 0)) +labs(title="2D raster type density plot")+
+         theme(legend.position='none')+facet_wrap(~cut_number(df1$age,6))
+plot5
+```
+
+### 2.4 Trellis plots
+
+The age is divided into 4 groups and plotted in four panels. The patterns in 2 panels ([17,28] & [28,37])of trellis plot looks almost similar and the same exists for other two panels.
+
+```{r (a) using cut number}
+plot6a<-ggplot(df, aes(x=edu_num,y=cap_loss,color=cap_loss))+geom_point()+labs(title="Trellis plot")+
+  facet_wrap(~cut_number(df$age,4))
+plot6a
+```
+
+Here, 10% overlap is created. In this specific problem, the trellis plot with shingles has no such big advantage. The plots with and without overlapping almost looks the same except some data points in plot with shingles. Ideally,  shingles should create an overlap to avoid information loss when plotting split data.
+
+```{r (b) using shingles}
+Agerange<-lattice::equal.count(df$age, number=4, overlap=0.1) #overlap is 10% 
+
+M<-matrix(unlist(levels(Agerange)), ncol=2, byrow = T)
+M1<-data.frame(Lower=M[,1],Upper=M[,2], Interval=factor(1:nrow(M)))
+ggplot(M1)+geom_linerange(aes(ymin = Lower, ymax = Upper, x=Interval))
+
+index=c()
+Class=c()
+for(i in 1:nrow(M)){
+  Cl=paste("[", M1$Lower[i], ",", M1$Upper[i], "]", sep="")
+  ind=which(df$age>=M1$Lower[i] &df$age<=M1$Upper[i])
+  index=c(index,ind)
+  Class=c(Class, rep(Cl, length(ind)))
+}
+
+df4<-df[index,]
+df4$Class<-as.factor(Class)
+
+ggplot(df4, aes(x=edu_num,y=cap_loss, color=cap_loss))+ geom_point()+labs(title="Trellis plot with Shingles")+
+  facet_wrap(~Class, labeller = "label_both")
+
+  
+```
+
+### Appendix
+
+```{r ref.label=knitr::all_labels(), echo = T, eval = F}
+
+```
+
+### References
+

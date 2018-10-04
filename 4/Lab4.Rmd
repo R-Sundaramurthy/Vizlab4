@@ -22,6 +22,7 @@ library(lattice)
 library(plotly)
 library(scales)
 library(tidyr)
+library(gridExtra)
 ```
 
 ## Assignment 1
@@ -170,7 +171,7 @@ plot_ly(x =~colnames(p_reord_q4), y =~rownames(p_reord_q4),
   )
 ```
 
-TSP solver has shorter path length (119.09) compared to HC solver (121.967). Thus it does a better job of optimizing the Hamiltonian Path Length. For measure of effectiveness (ME) the TSP solver (ME = 653.2224) has advantage over the HC (ME = 652.4429). A higher ME implies a better arrangement of the dissimilarity matrix. For gradient measures, since objective is to increase the distance from main diagonal, we infer that HC (Gradient_raw = 65528) does a better job of achieving this compared to TSP solver(Gradient_raw = 39102).
+TSP solver has shorter path length (120.9403) compared to HC solver (121.967). Thus it does a better job of optimizing the Hamiltonian Path Length. For measure of effectiveness (ME) the TSP solver (ME = 650.1384) is at a disadvantage compared to the HC (ME = 652.4429). A higher ME implies a better arrangement of the dissimilarity matrix. For gradient measures, since objective is to increase the distance from main diagonal, we infer that HC (Gradient_raw = 65528) does a better job of achieving this compared to TSP solver(Gradient_raw = 38166).
 
 ```{r criterion, echo = TRUE}
 # function creterion to compare unordered distance and ordered
@@ -179,7 +180,7 @@ TSP solver has shorter path length (119.09) compared to HC solver (121.967). Thu
 # use ser_row_TSP, same reason as above 
 
 
-result <- rbind(HC = criterion(p_e_rdist,ser_row_HC ), TSP  = criterion(p_e_rdist,or2))
+result <- rbind(HC = criterion(p_e_rdist,ser_row_HC ), TSP  = criterion(p_e_rdist,ser_row_TSP))
 
 result
 ```
@@ -250,7 +251,7 @@ p_ord_HC <- as.data.frame(p_reord)
 # emply list to contain plots
 plots=list()
 
-nPlot= ncol(p_ord_HC)
+nPlot= nrow(p_ord_HC)
 
 # put the row names to a column
 p_ord_HC %>%
@@ -266,40 +267,20 @@ for (i in 1:nPlot){
       layout(title=p_HC_radar$group[i]), style="width: 25%;")
 }
 
+
+
 h <-htmltools::tags$div(style = "display: flex; flex-wrap: wrap", plots)
 
 htmltools::browsable(h)
+
+#grid.arrange(grobs = plots, ncol = 3)
 ```
 
-```{r radar}
-# Create an emply list
-plots <- list()
-
-# number of plots equal to number of columns
-nplot <- nrow(p_ord_HC)
-
-p_ord_HC %>%
-  mutate_each(funs(rescale), -name) -> p_ord_HC_r
-
-for (i in 1:nPlot){
-  plots[[i]] <- htmltools::tags$div(
-    plot_ly(type = 'scatterpolar', 
-            r=as.numeric(p_ord_HC_r[i,-1]),
-            theta= colnames(p_ord_HC_r)[-1], 
-            fill="toself")%>%
-      layout(title=p_ord_HC_r$name[i]), style="width: 25%;")
-}
-
-h <-htmltools::tags$div(style = "display: flex; flex-wrap: wrap", Ps)
-
-htmltools::browsable(h)
-```
-
-Cairo and Delhi are outliers with respect to the price of bread per kg. Prague, Johanessburg and Panama form a cluster the prices are comparatively small and similar across the products.. The most distinct outlier would be Caracas. The prices are higher due to the size of the radar plot.
+Cairo is the most distinct outlier with respect to the price of bread per kg and net wage being very low while average number of work hours are very high.. Prague, Johanessburg and Panama form a cluster the prices are comparatively small and similar across the products.
 
 ### 1.7
 
-Among Heatmaps, paralled coordinates and radar charts, heatmaps are relatively easier to interprate in terms of time and accuracy. Radar cahrts are hard to interprate when the number of variables to compare are high. We found parallel coordiantes to be generally messy to work with.
+Among Heatmaps, paralled coordinates and radar charts, heatmaps are relatively easier to interprate in terms of time and accuracy. Radar charts are hard to interprate when the number of variables to compare are high. We found parallel coordiantes to be generally messy to work with.
 
 ## Assignment 2
 
